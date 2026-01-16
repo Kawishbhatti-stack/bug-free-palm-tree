@@ -1,9 +1,14 @@
-import fetch from 'node-fetch';
+const fetch = require("node-fetch")
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+exports.handler = async function (event) {
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      body: "Method Not Allowed"
+    }
+  }
 
-  const data = req.body;
+  const data = JSON.parse(event.body)
 
   try {
     const response = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -13,25 +18,32 @@ export default async function handler(req, res) {
         "api-key": process.env.BREVO_API_KEY
       },
       body: JSON.stringify({
-        sender: { email: "YOUR_VERIFIED_EMAIL@domain.com" }, 
-        to: [{ email: "kawishbhatti@gmail.com" }], 
-        subject: "Daily Calorie & BMI Report",
+        sender: { email: "a03651001@smtp-brevo.com" },
+        to: [{ email: "kawishbhatti@gmail.com" }],
+        subject: "Daily Calorie Report",
         htmlContent: `
-          <h2>Daily Report</h2>
-          <p>Date: ${data.date}</p>
-          <p>Total Calories: ${data.totalCalories}</p>
-          <p>Calories Left: ${data.caloriesLeft}</p>
-          <p>BMI: ${data.bmi}</p>
-          <p>Meals: ${data.meal1}, ${data.meal2}, ${data.meal3}, ${data.meal4}, ${data.meal5}</p>
-          <p>Drink: ${data.drink}</p>
-          <p>Extra: ${data.extra}</p>
+        <h3>Daily Calorie Report</h3>
+        <p>Date: ${data.date}</p>
+        <p>Total Calories: ${data.totalCalories}</p>
+        <p>Calories Left: ${data.caloriesLeft}</p>
+        <p>BMI: ${data.bmi}</p>
+        <p>Meals: ${data.meals}</p>
+        <p>Drink: ${data.drink}</p>
+        <p>Extra: ${data.extra}</p>
         `
       })
-    });
+    })
 
-    const result = await response.json();
-    res.status(200).json(result);
-  } catch (err) {
-    res.status(500).json({error: err.message});
+    const result = await response.json()
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify(result)
+    }
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: error.message
+    }
   }
 }
